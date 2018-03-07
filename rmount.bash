@@ -18,7 +18,7 @@ set -e
 #                      #
 ########################
 CONFIGFILE="config.json"
-
+HELPNAME="rmount"
 
 ############################################
 #                                          #
@@ -52,7 +52,7 @@ NC='\033[0m' # No Color
 
 function help()
 {
-    echo -e "$0 $LYELLOW<name>$NC"
+    echo -e "$HELPNAME $LYELLOW<name>$NC"
     echo ""
     echo -e " Names: "
     for vm in $(jq -r ".Hosts | keys[]" $PATHCONFIG); do
@@ -62,7 +62,7 @@ function help()
     echo ""
     echo ""
 
-    echo -e "$0 scan $LYELLOW<options>$NC <network range>"
+    echo -e "$HELPNAME scan $LYELLOW<options>$NC <network range>"
     echo ""
     echo -e " Options:"
     echo -e "$LYELLOW ssh samba$NC"
@@ -143,22 +143,13 @@ if [[ $EUID -ne 0 ]]; then
    exit 1
 fi
 
-# Check if config file exists
-if [ ! -f "$PATHCONFIG" ]; then
-    echo -e "$LRED[-] Configfile '$PATHCONFIG' not found$NC"
-    exit 1
-fi
-
-if [ "$1" == "" ]; then
-    help
-fi
 
 # Check if it should scan the network
 if [ "$1" == "scan" ]; then
 
     if [ "$2" == "" ] || [ "$3" == "" ]; then
-        echo "$0 scan <option> <network range>"
-        echo "Options: ssh samba"
+        echo -e "$HELPNAME scan$LYELLOW <option>$NC <network range>"
+        echo -e "Options:$LYELLOW ssh samba$NC"
         exit
     fi
 
@@ -174,6 +165,32 @@ if [ "$1" == "scan" ]; then
         exit
     fi
 
+    echo -e "$HELPNAME scan$LYELLOW <option>$NC <network range>"
+    echo -e "Options:$LYELLOW ssh samba$NC"
+    exit
+fi
+
+# Check if config file exists
+if [ ! -f "$PATHCONFIG" ]; then
+    echo -e "$LRED[-] Configfile '$PATHCONFIG' not found$NC"
+    exit 1
+fi
+
+
+# Make sure config.json is owned by root
+if [ "$(stat -c %U $PATHCONFIG)" != "root" ] || [ "$(stat -c %G $PATHCONFIG)" != "root" ]; then
+    echo -e "$LRED[-] $PATHCONFIG has to be owned by user root and group root$NC"
+    exit
+fi
+
+# Make sure config.json is not writeable by everyone
+if [ "$(stat -c %A $PATHCONFIG | cut -c9)" == "w" ]; then
+    echo -e "$LRED[-] $PATHCONFIG is writeable by everyone please change permissions"
+    exit
+fi
+
+if [ "$1" == "" ]; then
+    help
 fi
 
 # Use ssh method
