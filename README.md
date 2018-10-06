@@ -74,13 +74,6 @@ user@192.168.122.140:/home/user/Share to /home/linus/Share/ubuntu14vm
 ./rmount.bash scan samba 192.168.122.0/24
 ```
 
-## Security
-TLDP's Advanced Bash Scripting Guide states that shell scripts shouldn't be used for "situations where security is important, where you need to guarantee the integrity of your system and protect against intrusion, cracking, and vandalism."
-
-The config.json file can be used to inject commands into this shell script. 
-That's the reason this shell script will not parse any config.json file writeable by other users then root. 
-
-
 ## Share folder under Windows
 [Click Here](https://www.howtogeek.com/176471/how-to-share-files-between-windows-and-linux/)
 
