@@ -33,29 +33,17 @@ HELPNAME="rmount"
 PATHCONFIG="$PWD/$CONFIGFILE"
 
 ## COLORS
-RED='\033[00;31m'
-GREEN='\033[00;32m'
-YELLOW='\033[00;33m'
-BLUE='\033[00;34m'
-PURPLE='\033[00;35m'
-CYAN='\033[00;36m'
-LIGHTGRAY='\033[00;37m'
-
 LRED='\033[01;31m'
-LGREEN='\033[01;32m'
 LYELLOW='\033[01;33m'
-LBLUE='\033[01;34m'
-LPURPLE='\033[01;35m'
-LCYAN='\033[01;36m'
-WHITE='\033[01;37m' # No color
 NC='\033[0m' # No Color
+
 
 function help()
 {
     echo -e "$HELPNAME $LYELLOW<name>$NC"
     echo ""
     echo -e " Names: "
-    for vm in $(jq -r ".Hosts | keys[]" $PATHCONFIG); do
+    for vm in $(jq -r ".Hosts | keys[]" "$PATHCONFIG"); do
         echo -e -n " $LYELLOW$vm$NC"
     done
 
@@ -72,15 +60,17 @@ function help()
 # $1 --> Key
 function get_default_value()
 {
-    local RET=$(jq -r ".Default."$1 $PATHCONFIG)
-    echo $RET
+    local RET
+    RET=$(jq -r ".Default.""$1" "$PATHCONFIG")
+    echo "$RET"
 }
 
 
 # $1 --> Hostname-key
 function check_key()
 {
-    local RET=$(jq -r ".Hosts."$1 $PATHCONFIG)
+    local RET
+    RET=$(jq -r ".Hosts.""$1" "$PATHCONFIG")
 
     if [ "$RET" == "null" ]; then
         echo "False"
@@ -92,7 +82,8 @@ function check_key()
 # $1 --> Hostname-key
 function is_ssh()
 {
-    local RET=$(jq -r ".Hosts."$1".Method" $PATHCONFIG)
+    local RET
+    RET=$(jq -r ".Hosts.""$1"".Method" "$PATHCONFIG")
 
     if [ "$RET" == "Ssh" ] || [ "$RET" == "ssh" ]; then
         echo "True"
@@ -106,7 +97,8 @@ function is_ssh()
 # $1 --> Hostname-key
 function is_samba()
 {
-    local RET=$(jq -r ".Hosts."$1".Method" $PATHCONFIG)
+    local RET
+    RET=$(jq -r ".Hosts.""$1"".Method" "$PATHCONFIG")
 
     if [ "$RET" == "Samba" ] || [ "$RET" == "samba" ]; then
         echo "True"
@@ -125,15 +117,17 @@ function is_samba()
 # $1 --> Hostname-key $2 Key
 function get_value()
 {
-    local RET=$(jq -r ".Hosts."$1"."$2 $PATHCONFIG)
+    local RET
+    RET=$(jq -r ".Hosts.""$1"".""$2" "$PATHCONFIG")
     if [ "$RET" == "null" ]; then
-        local RET=$(get_default_value $2)
+        local RET
+        RET=$(get_default_value "$2")
         if [ "$RET" == "null" ]; then
-            echo "Error in config: .Hosts."$1"."$2" OR Default "
+            echo "Error in config: .Hosts.""$1"".""$2"" OR Default "
             exit
         fi
     fi
-    echo $RET
+    echo "$RET"
 }
 
 
@@ -154,14 +148,14 @@ if [ "$1" == "scan" ]; then
     fi
 
     if [ "$2" == "samba" ]; then
-        echo "Scan network $3 for open samba ports"
-        nmap -n -p445 $3 -oG -
+        echo "Scan network $3 for open samba 445 ports"
+        nmap -n -p445 "$3" -oG -
         exit
     fi
 
     if [ "$2" == "ssh" ]; then
-        echo "Scan network $3 for open ssh ports"
-        nmap -n -sV -p22 $3 -oG -
+        echo "Scan network $3 for open ssh 22 ports"
+        nmap -n -sV -p22 "$3" -oG -
         exit
     fi
 
@@ -178,13 +172,13 @@ fi
 
 
 # Make sure config.json is owned by root
-if [ "$(stat -c %U $PATHCONFIG)" != "root" ] || [ "$(stat -c %G $PATHCONFIG)" != "root" ]; then
+if [ "$(stat -c %U "$PATHCONFIG")" != "root" ] || [ "$(stat -c %G "$PATHCONFIG")" != "root" ]; then
     echo -e "$LRED[-] $PATHCONFIG has to be owned by user root and group root$NC"
     exit
 fi
 
 # Make sure config.json is not writeable by everyone
-if [ "$(stat -c %A $PATHCONFIG | cut -c9)" == "w" ]; then
+if [ "$(stat -c %A "$PATHCONFIG" | cut -c9)" == "w" ]; then
     echo -e "$LRED[-] $PATHCONFIG is writeable by everyone please change permissions"
     exit
 fi
@@ -194,14 +188,14 @@ if [ "$1" == "" ]; then
 fi
 
 # Use ssh method
-if [ "$(is_ssh $1)" == "True" ] && [ "$(check_key $1)" == "True" ]; then
+if [ "$(is_ssh "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
 
-    MOUNTPOINT=$(get_value $1 "Mountpoint")
-    MOUNTUSER=$(get_value $1 "MountUser")
-    VMUSER=$(get_value $1 "VMUser")
-    VMFOLDER=$(get_value $1 "VMFolder")
-    IP=$(get_value $1 "HostName")
-    IDENTITYFILE=$(get_value $1 "IdentityFile")
+    MOUNTPOINT=$(get_value "$1" "Mountpoint")
+    MOUNTUSER=$(get_value "$1" "MountUser")
+    VMUSER=$(get_value "$1" "VMUser")
+    VMFOLDER=$(get_value "$1" "VMFolder")
+    IP=$(get_value "$1" "HostName")
+    IDENTITYFILE=$(get_value "$1" "IdentityFile")
 
 
 
@@ -211,24 +205,26 @@ if [ "$(is_ssh $1)" == "True" ] && [ "$(check_key $1)" == "True" ]; then
     fi
 
     if [ ! -d  "$MOUNTPOINT/$1" ]; then
-        mkdir $MOUNTPOINT/$1
-        chown -R $MOUNTUSER: $MOUNTPOINT/$1
+        mkdir "$MOUNTPOINT/$1"
+        chown -R "$MOUNTUSER": "$MOUNTPOINT/$1"
     fi
-    echo "[*] sshfs -o allow_other -o  uid=$(id -u $MOUNTUSER) -o gid=$(id -g $MOUNTUSER) $VMUSER@$IP:/home/$VMUSER/$VMFOLDER $MOUNTPOINT/$1 -o IdentityFile=$IDENTITYFILE"
-    sshfs -o allow_other -o uid=$(id -u $MOUNTUSER) -o gid=$(id -g $MOUNTUSER) $VMUSER@$IP:/home/$VMUSER/$VMFOLDER $MOUNTPOINT/$1 -o IdentityFile=$IDENTITYFILE
+    set -x
+    sshfs -o allow_other -o uid="$(id -u "$MOUNTUSER")" -o gid="$(id -g "$MOUNTUSER")" "$VMUSER"@"$IP":/home/"$VMUSER"/"$VMFOLDER" "$MOUNTPOINT"/"$1" -o IdentityFile="$IDENTITYFILE"
+    set +x
     exit
+
 fi
 
 
 # Use samba method
-if [ "$(is_samba $1)" == "True" ] && [ "$(check_key $1)" == "True" ]; then
+if [ "$(is_samba "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
 
-    MOUNTPOINT=$(get_value $1 "Mountpoint")
-    MOUNTUSER=$(get_value $1 "MountUser")
-    VMUSER=$(get_value $1 "VMUser")
-    VMFOLDER=$(get_value $1 "VMFolder")
-    IP=$(get_value $1 "HostName")
-    PASSWORD=$(get_value $1 "SambaPassword")
+    MOUNTPOINT=$(get_value "$1" "Mountpoint")
+    MOUNTUSER=$(get_value "$1" "MountUser")
+    VMUSER=$(get_value "$1" "VMUser")
+    VMFOLDER=$(get_value "$1" "VMFolder")
+    IP=$(get_value "$1" "HostName")
+    PASSWORD=$(get_value "$1" "SambaPassword")
 
 
     if grep -qsw "$MOUNTPOINT/$1" "/proc/mounts"; then
@@ -237,11 +233,12 @@ if [ "$(is_samba $1)" == "True" ] && [ "$(check_key $1)" == "True" ]; then
     fi
 
     if [ ! -d  "$MOUNTPOINT/$1" ]; then
-        mkdir $MOUNTPOINT/$1
-        chown -R $MOUNTUSER: $MOUNTPOINT/$1
+        mkdir "$MOUNTPOINT/$1"
+        chown -R "$MOUNTUSER:" "$MOUNTPOINT/$1"
     fi
-    echo "[*] mount.cifs "//$IP/$VMFOLDER" "$MOUNTPOINT/$1" -o user=$VMUSER,pass=$PASSWORD,uid=$(id -u $MOUNTUSER),gid=$(id -g $MOUNTUSER)"
-    mount.cifs "//$IP/$VMFOLDER" "$MOUNTPOINT/$1" -o user=$VMUSER,pass=$PASSWORD,uid=$(id -u $MOUNTUSER),gid=$(id -g $MOUNTUSER)
+    set -x
+    mount.cifs "//$IP/$VMFOLDER" "$MOUNTPOINT/$1" -o user="$VMUSER",pass="$PASSWORD",uid="$(id -u "$MOUNTUSER")",gid="$(id -g "$MOUNTUSER")"
+    set +x
 
 
 else
