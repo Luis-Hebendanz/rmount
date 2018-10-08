@@ -7,7 +7,7 @@ Primarily developed to network-mount Windows and Linux Virtual Machines to local
 
 ## Technical Description
 The rmount utility will search for a file called 'config.json' in the executing directory. 
-It is recommended to add this bash script as alias. The moment it gets executed rmount searches in your current directory where the config.json is.
+The moment it gets executed rmount searches in your current directory where the config.json is.
 Then it parses the file. The script tries first to search for every key in it's designated Host struct. If it does not find the key there it searches for the same key in "Default".
 
 The rmount utility can also scan the network and enumerate possible samba and ssh servers. For this to happen use
