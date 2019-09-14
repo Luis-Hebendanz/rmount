@@ -192,12 +192,15 @@ if [ "$(is_ssh "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
 
     MOUNTPOINT=$(get_value "$1" "Mountpoint")
     MOUNTUSER=$(get_value "$1" "MountUser")
-    VMUSER=$(get_value "$1" "VMUser")
-    VMFOLDER=$(get_value "$1" "VMFolder")
+    REMOTE_USER=$(get_value "$1" "RemoteUser")
+    REMOTE_PATH=$(get_value "$1" "RemotePath")
     IP=$(get_value "$1" "HostName")
     IDENTITYFILE=$(get_value "$1" "IdentityFile")
 
 
+    if [ "$REMOTE_PATH" == "$(basename "$REMOTE_PATH")" ]; then
+        REMOTE_PATH="~/$REMOTE_PATH"
+    fi
 
     if grep -qsw "$MOUNTPOINT/$1" "/proc/mounts"; then
         echo -e "$LRED[-] Location $MOUNTPOINT/$1 already mounted$NC"
@@ -209,7 +212,7 @@ if [ "$(is_ssh "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
         chown -R "$MOUNTUSER": "$MOUNTPOINT/$1"
     fi
     set -x
-    sshfs -o allow_other -o uid="$(id -u "$MOUNTUSER")" -o gid="$(id -g "$MOUNTUSER")" "$VMUSER"@"$IP":/home/"$VMUSER"/"$VMFOLDER" "$MOUNTPOINT"/"$1" -o IdentityFile="$IDENTITYFILE"
+    sshfs -o allow_other -o uid="$(id -u "$MOUNTUSER")" -o gid="$(id -g "$MOUNTUSER")" "$REMOTE_USER"@"$IP":"$REMOTE_PATH" "$MOUNTPOINT"/"$1" -o IdentityFile="$IDENTITYFILE"
     set +x
     exit
 
@@ -221,8 +224,8 @@ if [ "$(is_samba "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
 
     MOUNTPOINT=$(get_value "$1" "Mountpoint")
     MOUNTUSER=$(get_value "$1" "MountUser")
-    VMUSER=$(get_value "$1" "VMUser")
-    VMFOLDER=$(get_value "$1" "VMFolder")
+    REMOTE_USER=$(get_value "$1" "RemoteUser")
+    REMOTE_PATH=$(get_value "$1" "RemotePath")
     IP=$(get_value "$1" "HostName")
     PASSWORD=$(get_value "$1" "SambaPassword")
 
@@ -237,7 +240,7 @@ if [ "$(is_samba "$1")" == "True" ] && [ "$(check_key "$1")" == "True" ]; then
         chown -R "$MOUNTUSER:" "$MOUNTPOINT/$1"
     fi
     set -x
-    mount.cifs "//$IP/$VMFOLDER" "$MOUNTPOINT/$1" -o user="$VMUSER",pass="$PASSWORD",uid="$(id -u "$MOUNTUSER")",gid="$(id -g "$MOUNTUSER")"
+    mount.cifs "//$IP/$REMOTE_PATH" "$MOUNTPOINT/$1" -o user="$REMOTE_USER",pass="$PASSWORD",uid="$(id -u "$MOUNTUSER")",gid="$(id -g "$MOUNTUSER")"
     set +x
 
 
