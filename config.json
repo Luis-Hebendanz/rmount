@@ -1,24 +1,23 @@
 {
-"Default": {
-        "MountUser":"linus",
-	"Mountpoint": "/home/linus/Share",
+   "Default":
+   {
+       "MountUser":"linus",
+           "Mountpoint": "/home/linus/Share",
 
-        "VMUser":"user",
-        "VMFolder":"Share",
+           "VMUser":"user",
+           "VMFolder":"Share",
 
-	"IdentityFile": "/home/linus/.ssh/id_rsa",
-        "SambaPassword":"password"
-	},
+           "IdentityFile": "/home/linus/.ssh/id_rsa",
+           "SambaPassword":"password"
+   },
 
-	"Hosts": {
-		"ubuntu14vm": {
-            		"Method":"ssh",
-			"HostName": "192.168.122.140"
-		},
-
-        	"win7vm":{
-            		"Method":"samba",
-            		"HostName":"192.168.122.139"
-        		}
-	}
+   "Hosts": {
+       "test": {
+           "Method":"ssh",
+           "HostName": "test.com",
+           "RemoteUser":"download",
+           "RemotePath": "/export/download",
+           "Mountpoint":"/home/linus/Share"
+       }
+   }
 }
